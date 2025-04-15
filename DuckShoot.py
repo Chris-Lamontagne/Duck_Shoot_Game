@@ -21,7 +21,7 @@ ROW2_SPEED = -5   # moves left
 
 # Game conditions
 TOTAL_SHOTS = 20     # 20 shot countdown
-GAME_DURATION = 30   # 30 second timer
+GAME_DURATION = 30   # 30-second timer
 
 # Colors
 WHITE = (255, 255, 255)
