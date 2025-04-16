@@ -53,3 +53,8 @@ About:
 
 Created as part of a personal coding journey and shared in my writing portfolio:
 https://www.clippings.me/users/clamontagne
+
+Acknowledgements: 
+
+Duck images and sound effects sourced from royalty-free game asset sites. 
+Built using Pygame. 
