@@ -110,7 +110,7 @@ def run_game():
 
     # Load background image and scale it.
     try:
-        background = pygame.image.load("background.jpg").convert()
+        background = pygame.image.load("assets/images/background.jpg").convert()
         background = pygame.transform.scale(background, (SCREEN_WIDTH, SCREEN_HEIGHT))
     except pygame.error as e:
         print("Background image not found or error loading image:", e)
@@ -119,8 +119,8 @@ def run_game():
 
     # Load duck images.
     try:
-        duck1_image = pygame.image.load("Duck1.jpg").convert_alpha()
-        duck2_image = pygame.image.load("Duck2.jpg").convert_alpha()
+        duck1_image = pygame.image.load("assets/images/Duck1.jpg").convert_alpha()
+        duck2_image = pygame.image.load("assets/images/Duck2.jpg").convert_alpha()
     except pygame.error as e:
         print("Duck images not found or error loading image:", e)
         pygame.quit()
@@ -128,8 +128,8 @@ def run_game():
 
     # Load sounds.
     try:
-        hit_sound = pygame.mixer.Sound("hit.wav")
-        miss_sound = pygame.mixer.Sound("miss.mp3")
+        hit_sound = pygame.mixer.Sound("assets/sounds/hit.wav")
+        miss_sound = pygame.mixer.Sound("assets/sounds/miss.mp3")
     except pygame.error as e:
         print("Sound files not found or error loading sound:", e)
         pygame.quit()
