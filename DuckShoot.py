@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import os
 
 # --- Constants ---
 SCREEN_WIDTH = 800
@@ -20,7 +21,7 @@ ROW1_SPEED = 5    # moves right
 ROW2_SPEED = -5   # moves left
 
 # Game conditions
-TOTAL_SHOTS = 20     # 20 shot countdown
+TOTAL_SHOTS = 20     # 20-shot countdown
 GAME_DURATION = 30   # 30-second timer
 
 # Colors
@@ -31,31 +32,36 @@ RED   = (255, 0, 0)
 # Regular point values for ducks (only used if not 0-point)
 POINT_VALUES = [5, 10, 15]
 
+# --- Resource path helper for PyInstaller ---
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 # --- Duck Class ---
 class Duck:
     def __init__(self, x, y, speed, image):
         self.rect = pygame.Rect(x, y, DUCK_WIDTH, DUCK_HEIGHT)
         self.speed = speed
-        # Scale the image to the duck size.
         self.image = pygame.transform.scale(image, (DUCK_WIDTH, DUCK_HEIGHT))
+        self.points = 0
+        self.hit = False
         self.reset_properties()
 
     def reset_properties(self):
-        # 50% chance for 0 points, else a random point value (5, 10, or 15)
         self.points = 0 if random.random() < 0.5 else random.choice(POINT_VALUES)
         self.hit = False
 
     def reset_position(self):
-        # Reset the duck's position when it goes off-screen.
         if self.speed > 0:
             self.rect.x = -DUCK_WIDTH
         else:
             self.rect.x = SCREEN_WIDTH
 
     def update(self):
-        # Move the duck horizontally based on its speed.
         self.rect.x += self.speed
-        # When the duck fully exits the screen, reset its position and properties.
         if self.speed > 0 and self.rect.left > SCREEN_WIDTH:
             self.reset_position()
             self.reset_properties()
@@ -64,9 +70,7 @@ class Duck:
             self.reset_properties()
 
     def draw(self, screen, font):
-        # Draw the duck image.
         screen.blit(self.image, self.rect)
-        # Draw the point value above the duck image in black.
         text = font.render(str(self.points), True, BLACK)
         text_pos = (self.rect.x, self.rect.y - text.get_height())
         screen.blit(text, text_pos)
@@ -80,8 +84,6 @@ class Crosshair:
     def move(self, dx, dy):
         self.rect.x += dx * self.speed
         self.rect.y += dy * self.speed
-
-        # Keep the crosshair within the screen bounds.
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > SCREEN_WIDTH:
@@ -93,49 +95,41 @@ class Crosshair:
 
     def draw(self, screen):
         center = self.rect.center
-        # Draw crosshair in black.
         pygame.draw.circle(screen, BLACK, center, CROSSHAIR_SIZE // 2, 2)
-        pygame.draw.line(screen, BLACK, (center[0] - CROSSHAIR_SIZE, center[1]),
-                         (center[0] + CROSSHAIR_SIZE, center[1]), 2)
-        pygame.draw.line(screen, BLACK, (center[0], center[1] - CROSSHAIR_SIZE),
-                         (center[0], center[1] + CROSSHAIR_SIZE), 2)
+        pygame.draw.line(screen, BLACK, (center[0] - CROSSHAIR_SIZE, center[1]), (center[0] + CROSSHAIR_SIZE, center[1]), 2)
+        pygame.draw.line(screen, BLACK, (center[0], center[1] - CROSSHAIR_SIZE), (center[0], center[1] + CROSSHAIR_SIZE), 2)
 
 # --- Main Game Function ---
 def run_game():
-    # No need to call pygame.init() here as we now initialize everything in main()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Carnival Duck Shooter")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 36)
 
-    # Load background image and scale it.
     try:
-        background = pygame.image.load("assets/images/background.jpg").convert()
+        background = pygame.image.load(resource_path("assets/images/background.jpg")).convert()
         background = pygame.transform.scale(background, (SCREEN_WIDTH, SCREEN_HEIGHT))
     except pygame.error as e:
         print("Background image not found or error loading image:", e)
         pygame.quit()
         sys.exit()
 
-    # Load duck images.
     try:
-        duck1_image = pygame.image.load("assets/images/Duck1.jpg").convert_alpha()
-        duck2_image = pygame.image.load("assets/images/Duck2.jpg").convert_alpha()
+        duck1_image = pygame.image.load(resource_path("assets/images/Duck1.jpg")).convert_alpha()
+        duck2_image = pygame.image.load(resource_path("assets/images/Duck2.jpg")).convert_alpha()
     except pygame.error as e:
         print("Duck images not found or error loading image:", e)
         pygame.quit()
         sys.exit()
 
-    # Load sounds.
     try:
-        hit_sound = pygame.mixer.Sound("assets/sounds/hit.wav")
-        miss_sound = pygame.mixer.Sound("assets/sounds/miss.mp3")
+        hit_sound = pygame.mixer.Sound(resource_path("assets/sounds/hit.wav"))
+        miss_sound = pygame.mixer.Sound(resource_path("assets/sounds/miss.mp3"))
     except pygame.error as e:
         print("Sound files not found or error loading sound:", e)
         pygame.quit()
         sys.exit()
 
-    # Create ducks for both rows. Each row will have 5 ducks.
     ducks = []
     spacing = SCREEN_WIDTH // 5
     for i in range(5):
@@ -145,22 +139,17 @@ def run_game():
         duck_bottom = Duck(x, ROW2_Y, ROW2_SPEED, duck2_image)
         ducks.append(duck_bottom)
 
-    # Create the crosshair.
     crosshair = Crosshair()
 
     score = 0
     shots_remaining = TOTAL_SHOTS
-    # Timer setup
     start_ticks = pygame.time.get_ticks()
     game_over = False
 
-    # --- Game Loop ---
     while not game_over:
         clock.tick(FPS)
-        # Calculate remaining time in seconds.
         elapsed_seconds = (pygame.time.get_ticks() - start_ticks) / 1000
         remaining_time = max(0, GAME_DURATION - int(elapsed_seconds))
-        # Check for time up.
         if remaining_time <= 0:
             game_over = True
 
@@ -168,7 +157,6 @@ def run_game():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            # Process shooting on spacebar press.
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and shots_remaining > 0:
                     shot_hit = False
@@ -187,20 +175,15 @@ def run_game():
 
         keys = pygame.key.get_pressed()
         dx = dy = 0
-        if keys[pygame.K_LEFT]:
-            dx = -1
-        if keys[pygame.K_RIGHT]:
-            dx = 1
-        if keys[pygame.K_UP]:
-            dy = -1
-        if keys[pygame.K_DOWN]:
-            dy = 1
+        if keys[pygame.K_LEFT]: dx = -1
+        if keys[pygame.K_RIGHT]: dx = 1
+        if keys[pygame.K_UP]: dy = -1
+        if keys[pygame.K_DOWN]: dy = 1
         crosshair.move(dx, dy)
 
         for duck in ducks:
             duck.update()
 
-        # --- Drawing ---
         screen.blit(background, (0, 0))
         for duck in ducks:
             duck.draw(screen, font)
@@ -238,7 +221,7 @@ def show_start_screen():
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    return  # Start the game
+                    return
 
 # --- Game Over and Restart Function ---
 def game_over_screen(score):
@@ -262,11 +245,10 @@ def game_over_screen(score):
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    return  # Restart the game
+                    return
 
 # --- Main Loop ---
 def main():
-    # Initialize Pygame and its font module before anything else.
     pygame.init()
     pygame.font.init()
     while True:
